@@ -115,7 +115,7 @@ Important files that are relevant to MEMS CTRNN implementation
 - 'CTRNN_timeseries/MatDL/rnn/ctrnnm_forward.m': The MEMS-CTRNN forward pass equation is implemented here. Voltages asscoiated to each neuron are passed to this function but are not used in the training process. 
 - 'CTRNN_timeseries/MatDL/zoo/init_two_ctrnnm.m': We initialize all the parameters required for training for MEMS-CTRNN here
 - 'CTRNN_timeseries/MatDL/zoo/two_ctrnnm.m': Training functions are called in this module 
-- 'CTRNN_timeseries/MatDL/optim' :You can chnage the training optimizer files here. Make sure to exclude a parameter in these files, if you do not want to use it in the training process.
+- 'CTRNN_timeseries/MatDL/optim': You can change the training optimizer files here. Make sure to exclude a parameter in these files, if you do not want to use it in the training process.
 
 ## Citation
 
