@@ -102,18 +102,24 @@ maxRelError = gradcheck(@six_nn_bn, x, model, y, opt, 10);
 [yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @six_nn_bn, model, opt)
 ```
 
-## Contributing
+## CTRNN and MEM-CTRNN Model Files
 
-Contributions are highly welcome!
+- As a convention, any file that is particularly related to CTRNN model is preceded by 'ctrnn_' in its name. The same rule applies to MEMS CTRNN model where relevant files are preceded by ctrnnm_.
 
-If you wish to contribute, follow these steps:
-- Create a personal fork of the MatDL GitHub repository.
-- Make your changes in a branch named other than `master`.
-- Follow the same coding and documentation style for consistency.
-- Make sure that your changes do not break any of the existing functionality.
-- Submit a pull request.
+- An example of code that uses CTRNN model is located at CTRNN_timeseries/MatDL/ctrnnet_UCI_seq_6D_walkingup_tuned.m
+- An example of code that uses MEMS CTRNN model is located at CTRNN_timeseries/MatDL/ctrnnm_UCI_seq_6D_walkingup_tuned.m
 
-Please use Github issues to report bugs or request features.
+MEMS CTRNN is still under development.
+
+Important files that are relevant to MEMS CTRNN implementation
+###CTRNN_timeseries/MatDL/rnn/ctrnnm_forward.m
+The MEMS-CTRNN forward pass equation is implemented here. Voltages asscoiated to each neuron are passed to this function but are not used in the training process. 
+###CTRNN_timeseries/MatDL/zoo/init_two_ctrnnm.m
+We initialize all the parameters required for training for MEMS-CTRNN here
+###CTRNN_timeseries/MatDL/zoo/two_ctrnnm.m
+Training functions are called in this module 
+###CTRNN_timeseries/MatDL/optim
+You can chnage the training optimizer files here. Make sure to exclude a parameter in these files, if you do not want to use it in the training process.
 
 ## Citation
 
