@@ -102,7 +102,7 @@ maxRelError = gradcheck(@six_nn_bn, x, model, y, opt, 10);
 [yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @six_nn_bn, model, opt)
 ```
 
-## CTRNN and MEM-CTRNN Model Files
+## CTRNN and MEMS-CTRNN Model Files
 
 - As a convention, any file that is particularly related to CTRNN model is preceded by 'ctrnn_' in its name. The same rule applies to MEMS CTRNN model where relevant files are preceded by ctrnnm_.
 
