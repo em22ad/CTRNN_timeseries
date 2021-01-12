@@ -5,7 +5,8 @@ addpath(genpath('../MatDL'));
 %% Set Params
 USE_QUANT=1; 
 AUG_PER_WINDOW=3;
-WINDOW_SZ=round(3.49*50); %# of secs x 50Hz
+%The window size should be less than the mean activiy time
+WINDOW_SZ=round(3.49*50); %# of secs x 50Hz %longer activities generally need longer window sizes
 AUGMENT_DS=1;
 NCPY_EXT=0.05; % K
 AFT_EVERY=round(WINDOW_SZ/5); % M
@@ -19,16 +20,6 @@ ACC=dlmread('HAPT dataset/RawData/acc_exp05_user03.txt');
 %ACC=dlmread('HAPT dataset/RawData/acc_exp07_user04.txt');
 %ACC=dlmread('HAPT dataset/RawData/acc_exp09_user05.txt');
 
-% Xact=ACC(300:315,1:3); %2222:2377
-% Xact=Xact';
-% Xact=normalize(Xact);
-
-%X=X(100:end);
-%X = round(rand(1,1000));
-%T = [(Xin(2:end)-Xin(1:end-1) > 0)];
-
-%pattern_act=return_pattern(Xact);
-%pattern=[1 0 1];
 %% Get the full motion sequence
 %Xin=ACC(1:20000,1:3);
 %Xin=ACC(1:16565,1:3); % EXP 4 USR 2
@@ -277,7 +268,7 @@ opt.maxEpochs = 1000;
 opt.earlyStoppingPatience = 1000;
 opt.valFreq = 100;
 
-opt.plotProgress = false;
+opt.plotProgress = true;
 opt.extractFeature = false;
 opt.computeDX = false;
 opt.t= randn(1, layers_size(1));
