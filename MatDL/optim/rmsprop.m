@@ -15,6 +15,9 @@ function [model, opt] = rmsprop(model, grads, opt)
 
     p = fieldnames(model);
     for i = 1:numel(p)
+        if (p{i} == 'v')
+            continue;
+        end
         rmspropDecay = opt.rmspropDecay;
         opt.vgrads.(p{i}) = opt.vgrads.(p{i}) * rmspropDecay + (1.0 - rmspropDecay) * (grads.(p{i}).^2);
         dx = -(opt.learningRate * grads.(p{i})) ./ sqrt(opt.vgrads.(p{i}) + 1e-8);
