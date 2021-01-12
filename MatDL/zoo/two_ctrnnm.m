@@ -1,3 +1,4 @@
+%The training function
 function [out, grads, opt] = two_ctrnnm(X, model, y, opt)
 
     weightDecay = opt.weightDecay;
@@ -6,13 +7,17 @@ function [out, grads, opt] = two_ctrnnm(X, model, y, opt)
     computeDX = opt.computeDX;
 
     wx1 = model.wx1; wh1 = model.wh1; b1 = model.b1;
-    wy = model.wy; by = model.by; v = model.v;
+    wy = model.wy; by = model.by; 
+    
+    %We can limit the bias here by adding a condition
+    v = model.v;
 
     dropoutParam.p = dropout;
     if gather(y == 0), dropoutParam.mode = 'test'; else dropoutParam.mode = 'train'; end
     dropoutParam.useGPU = opt.useGPU;
 
     hprev = zeros([size(X, 1), size(wh1, 1)]);
+    %The following function implements the equation 4
     [a1, cache1] = ctrnnm_forward(X, hprev, wx1, wh1, b1, v); % No GPU
     [d1, cached1] = dropout_forward(a1, dropoutParam);
     [scores, cache2] = forward(d1(:, :, end), wy, by); % Only last one
@@ -43,6 +48,9 @@ function [out, grads, opt] = two_ctrnnm(X, model, y, opt)
             grads.(W{i}) = grads.(W{i}) + weightDecay * w;
         end
     end
+    
+    %We can filter weights W{i} after the above loop is finsihed
+    
     out = dataLoss + regLoss;
 
 end
