@@ -24,9 +24,11 @@ function [ maxRelError ] = gradcheck( lossfun, x, model, y, opt, numChecks  )
     
     p = fieldnames(model);
     for i = 1:numel(p)
-        disp(p{i})
+        if (p{i} == 'v')
+            continue;
+        end
         mn = numel(model.(p{i}));
-        mn
+        %mn
         numChecks
         imn = (randperm(mn, numChecks));
         for j = 1:numChecks
