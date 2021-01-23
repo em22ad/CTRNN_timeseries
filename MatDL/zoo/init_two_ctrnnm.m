@@ -1,7 +1,8 @@
-function [model, opt] = init_two_ctrnnm(N, K, layers_size, opt)
-
+function [model, opt] = init_two_ctrnnm(M, N, K, layers_size, opt)
+    
+    %M=round(M/2.0);
     weightScale = 0.01;
-    biasScale = 50.0;
+    biasScale = 100;
 
     NL1 = layers_size(1);
 
@@ -9,8 +10,8 @@ function [model, opt] = init_two_ctrnnm(N, K, layers_size, opt)
     model.wh1 = randn(NL1, NL1) * weightScale;
     model.b1 = randn(1, NL1) * biasScale;
     model.wy = randn(NL1, K) * weightScale;
-    model.by = randn(1, K) * biasScale;
-    model.v = zeros(NL1,1); %each element of v corresponds to voltage associated to each neuron
+    model.by = rand(1, K) * biasScale; %bias cannot be negative
+    %model.v = zeros(NL1,M); %each element of v corresponds to voltage associated to each neuron
     
     p = fieldnames(model);
     for i = 1:numel(p)
