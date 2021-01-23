@@ -1,4 +1,4 @@
-function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b, vprev)
+function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
 %RNN_FORWARD Compute the forward pass for a recurrent layer
 %   Inputs:
 %       - x: input to layer, of size: batch size (m) x previous layer size x time steps (t) 
@@ -25,29 +25,45 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b, vprev)
             %<------>
             %  <------>
             %     <------>
-    
+    %M is the number of windows
     [M, ~, T] = size(x); %input dimensions, ~ windows of M elements in each sliding window for T timesteps
     H = size(wh, 2); %size of hidden layer (number of neurons)
     out = zeros(M, H, T); % output of one forward pass
     
-    %Voltage update equation
-    %vprev=(repmat(vprev,1,M)*tanh(out(:, :, 1)-4.2000e-05)*wh)+repmat(b, H, 1); %V update equation on page 2
-
-    C=(4.9311e-20./(4.2000e-05-hprev).^2); %a term of Equation (4) where hprev ~ z_i(t) 
-    %vprev(Previous Voltage) is vector 5x1, Since we have 5 neurons, we will repeat it for 5 times to create a 5x5 matrix
-    term1=(C.*(tanh(hprev-4.1800e-05)*wh*repmat(vprev,1,H))+repmat(b, M, 1)).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
-    term2=(4.1339e-08*(x(:, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
-    out(:, :, 1) = 0.9395*hprev+term1-term2; %equation 4 implemented
-    v=(repmat(vprev,1,M)*tanh(out(:, :, 1)-4.2000e-05)*wh)+repmat(b, H, 1); %V update equation on page 2
-    for t = 2:T
-        C=(4.9311e-20./(4.2000e-05-out(:, :, t - 1)).^2); % an iterative version of C
-         % (below) an iterative version of Equation 4
-        out(:,:, t) = 0.9395*out(:, :, t - 1)+(C.*(tanh(out(:, :, t - 1)-4.1800e-05)*wh*v)+repmat(b, M, 1)).^2-(4.1339e-08*(x(:, :, t)*wx));
-        %vprev=previous layer voltages, out(t) ~ z_(t)
-        %dim(v)=49x5 or 176x5
-        %v's should not go negative % v should be handled as z
-        v=(repmat(vprev,1,M)*tanh(out(:, :, t)-4.2000e-05)*wh)+repmat(b, H, 1); %for every neuron V must be re-evaluated at every time step.
+    %We always initialize the Voltage to be zeros.
+    vprev=zeros(H,M);
+    
+    for wi=1:M
+        C=(4.9311e-20./(4.2000e-05-hprev(wi,:)).^2); %a term of Equation (4) where hprev ~ z_i(t) 
+        %vprev(Previous Voltage) is vector 5x1, Since we have 5 neurons, we will repeat it for 5 times to create a 5x5 matrix
+        %(C(1x5).x tanh(z(1x5))w(5x1)*V(1*5))+ b(1x5)
+        term1=(C.*(tanh(hprev(wi,:)-4.1800e-05)*wh*vprev(:,wi))+b).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
+        term2=(4.1339e-08*(x(wi, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
+        out(wi, :, 1) = 0.9395*hprev(wi,:)+term1-term2; %equation 4 implemented
     end
-    cache.vprev=v(1,:)'; %store v into cache so that it can be used during training passes
-    cache.x = x; cache.hprev = hprev; cache.wx = wx; cache.wh = wh; cache.b = b; cache.out = out;
+    %176x49 %176 is the observation per window and 49 is the number of windows 
+    %V(5x49)= V(5*49)*tanh(Z(49 x 5)*wh(5x5)+b(5x5)
+    %v(5x1)=tanh(out(1x5))*wh(5x5)*v(5x1)'+b(1x5)
+    %bias for V should all be positive
+    for wi=1:M
+        v(:,wi)=(tanh(out(wi, :, 1)-4.2000e-05)*wh*vprev(:,wi))+b; %V update equation on page 2
+    end
+    
+    for t = 2:T
+        for wi=1:M
+            C=(4.9311e-20./(4.2000e-05-out(wi, :, t - 1)).^2); %a term of Equation (4) where hprev ~ z_i(t) 
+            term1=(C.*(tanh(out(wi, :, t - 1)-4.1800e-05)*wh*v(:,wi))+b).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
+            term2=(4.1339e-08*(x(wi, :, t)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
+            out(wi, :, t) = 0.9395*out(wi, :, t - 1)+term1-term2; %equation 4 implemented
+        end
+        for wi=1:M
+            v(:,wi)=(tanh(out(wi, :, t)-4.2000e-05)*wh*vprev(:,wi))+b; %V update equation on page 2
+        end        
+    end
+    cache.x = x; 
+    cache.hprev = hprev; 
+    cache.wx = wx; 
+    cache.wh = wh; 
+    cache.b = b; 
+    cache.out = out;
 end
