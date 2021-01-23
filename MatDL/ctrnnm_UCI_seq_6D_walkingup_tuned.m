@@ -245,8 +245,9 @@ YVal=YVal(1:last_idx,:);
 
 %% Initialize model
 opt = struct;
-layers_size=[5 5];
-[model, opt] = init_two_ctrnnm(size(X,2), size(Y,2), layers_size, opt);
+%layers_size=[5 5];
+layers_size=[5];
+[model, opt] = init_two_ctrnnm(size(X,1),size(X,2), size(Y,2), layers_size, opt);
 
 %% Hyper-parameters
 opt.batchSize = 1;
