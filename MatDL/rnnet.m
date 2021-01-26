@@ -4,31 +4,31 @@ clear all
 addpath(genpath('../MatDL'));
 
 %% Load data
+% load('../Data/mnist_uint8.mat');
+% X = double(reshape(train_x',1,784,60000))/255; X = permute(X, [3 2 1]);
+% XVal = double(reshape(test_x',1,784,10000))/255; XVal = permute(XVal, [3 2 1]);
+% Y = double(train_y);
+% YVal = double(test_y);
+
+%% Initialize model
+% opt = struct;
+% 
+% [model, opt] = init_two_rnn(28, 10, [10 10], opt);
+%% Load data
 load('../Data/mnist_uint8.mat');
-X = double(reshape(train_x',1,784,60000))/255; X = permute(X, [3 2 1]);
-XVal = double(reshape(test_x',1,784,10000))/255; XVal = permute(XVal, [3 2 1]);
+X = double(reshape(train_x',1,784,60000))/255; 
+X = permute(X, [3 2 1]);
+XVal = double(reshape(test_x',1,784,10000))/255; 
+XVal = permute(XVal, [3 2 1]);
 Y = double(train_y);
 YVal = double(test_y);
 
 %% Initialize model
 opt = struct;
 
-[model, opt] = init_two_rnn(28, 10, [10 10], opt);
-%% Load data
-% load('../Data/mnist_uint8.mat');
-% X = double(reshape(train_x',1,784,60000))/255; 
-% X = permute(X, [3 2 1]);
-% XVal = double(reshape(test_x',1,784,10000))/255; 
-% XVal = permute(XVal, [3 2 1]);
-% Y = double(train_y);
-% YVal = double(test_y);
-% 
-% %% Initialize model
-% opt = struct;
-% 
-% %[model, opt] = init_two_rnn(N, K, layers_size, opt)
-% % N is the input size. K is the # of outputs
-% [model, opt] = init_two_rnn(784, 10, [10 10], opt);
+%[model, opt] = init_two_rnn(N, K, layers_size, opt)
+% N is the input size. K is the # of outputs
+[model, opt] = init_two_rnn(784, 10, [10 10], opt);
 
 %% Hyper-parameters
 opt.batchSize = 100;
@@ -73,4 +73,4 @@ maxRelError = gradcheck(@two_rnn, x, model, y, opt, 5);
 [model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_rnn, opt );
 
 %% Predict
-[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_rnn, model, opt)
+[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_rnn, model, opt); %Remove semicolon to display output.
