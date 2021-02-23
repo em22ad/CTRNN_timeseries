@@ -1,11 +1,18 @@
 % A complete example of a continuous time recurrent neural network
+%PLOT THE ACCURACY AND FP VS TP W.R.T THRESHOLD
+% TBD: I NEED TO FIRST REPLACE LSTM FW CODE WITH CTRNN AFTER TRAINiNG TUNING
+% TBD: REPEAT THE PROCESS FOR MULTIPLE SUBJECTS AND REPORT THE FINAL ACCURACY
+% FOR LSTM AND MEMS_CTRNN
+% RSULTS IMPROVEMENT VIA INCREASING THE NEURONS LSTM VS MEMS-CTRNN
+
 %% Init
 clear;
 addpath(genpath('../MatDL'));
 %% Set Params
 USE_QUANT=1; 
-AUG_PER_WINDOW=0;
+AUG_PER_WINDOW=5;
 %The window size should be less than the mean activiy time
+PHY_WINDOW_SZ=1;
 WINDOW_SZ=round(3.49*50); %# of secs x 50Hz %longer activities generally need longer window sizes
 AUGMENT_DS=1;
 NCPY_EXT=0.05; % K
@@ -87,10 +94,11 @@ if (DISPLAY_3D_OBS == 1)
             keep_on = keep_on-1;
         end
     end
+    hold off;
 end
-hold off;
 
-X_f=zeros(size(Xin,2)-WINDOW_SZ,WINDOW_SZ,3);
+
+X_f=zeros(ceil((size(Xin,2)-WINDOW_SZ)/WINDOW_SZ),WINDOW_SZ,3);
 Y_f=[];
 XVal_f=zeros(size(Xin,2)-WINDOW_SZ,WINDOW_SZ,3);
 YVal_f=[];
@@ -177,18 +185,48 @@ for i=1:WINDOW_SZ:size(Xin,2)-WINDOW_SZ
     end  
 end
 
-X=zeros(size(Y_f,1),size(X_f,2),size(X_f,3));
-Y=zeros(size(Y_f,1),2);
-for idx=1:size(Y_f,1)
-    X(idx,:,1:3)=X_f(idx,:,1:3);
-    Y(idx,:)=Y_f(idx,:);
-end
+%X=zeros(size(Y_f,1),size(X_f,2),size(X_f,3));
+%Y=zeros(size(Y_f,1),2);
+%for idx=1:size(Y_f,1)
+    %X(idx,:,1:3)=X_f(idx,:,1:3);
+    %Y(idx,:)=Y_f(idx,:);
+%end
 
 XVal=zeros(size(YVal_f,1),size(XVal_f,2),size(XVal_f,3));
 for idx=1:size(YVal_f,1)
     XVal(idx,:,1:3)=XVal_f(idx,:,1:3);
 end
-%Make the validation set have equal number of classes 
+
+%Make the Training set have equal number of classes
+tot1=0;
+tot2=0;
+last_idx=0;
+X=zeros(size(Y_f,1),size(X_f,2),size(X_f,3));
+max_card=max(sum(Y_f(:,1)),sum(Y_f(:,2)));
+Y=[];
+for idx=1:size(Y_f,1)
+    if (Y_f(idx,2) == 1) && (tot2 < max_card)
+        tot2=tot2+1;
+        last_idx=last_idx+1;
+        X(last_idx,:,1:3)=X_f(idx,:,1:3);
+        Y=[Y;[0 1]];
+    end
+    
+    if (Y_f(idx,1) == 1) && (tot1 < max_card)
+        tot1=tot1+1;
+        last_idx=last_idx+1;
+        X(last_idx,:,1:3)=X_f(idx,:,1:3);
+        Y=[Y;[1 0]];
+    end
+    
+    if ((tot1 >= max_card) || (tot2 >= max_card))
+        break;
+    end
+end
+Y=Y(1:last_idx,:);
+X=X(1:last_idx,:,:);
+
+%Make the validation set have equal number of classes
 tot1=0;
 tot2=0;
 last_idx=0;
@@ -221,7 +259,7 @@ XTrain={};
 XTrain{1}=[];
 ctr=1;
 for i=1:size(X,1)  
-    XTrain{ctr}=squeeze(X(i,1:WINDOW_SZ,:));
+    XTrain{ctr}=squeeze(X(i,1:WINDOW_SZ,2)); %only choose Y, '2' dimension
     %XTrain{ctr}=XTrain{ctr}';
     [~,idx]=find(Y(i,:)>0);
     YTrain(ctr)=categorical(idx);
@@ -245,7 +283,7 @@ end
 XTrain = XTrain(idx);
 YTrain = YTrain(idx)';
 
-inputSize = WINDOW_SZ;
+inputSize = PHY_WINDOW_SZ;
 numHiddenUnits = 5;
 numClasses = 2;
 
@@ -270,13 +308,13 @@ options = trainingOptions('adam', ...
     'Plots','training-progress');
 
 net = trainNetwork(XTrain,YTrain,layers,options);
-net = closeloop(net);
+%net = closeloop(net);
 %%
 XTest={};
 XTest{1}=[];
 ctr=1;
 for i=1:size(XVal,1)  
-    XTest{ctr}=squeeze(XVal(i,1:WINDOW_SZ,:));
+    XTest{ctr}=squeeze(XVal(i,1:WINDOW_SZ,2));%only choose Y, '2' dimension
     %XTest{ctr}=XTest{ctr}';
     [~,idx]=find(YVal(i,:)>0);
     YTest(ctr)=categorical(idx);
@@ -297,4 +335,4 @@ YPred = classify(net,XTest, ...
     'MiniBatchSize',miniBatchSize, ...
     'SequenceLength','longest');
 
-acc = sum(YPred == YTest)./numel(YTest)
+acc = sum(YPred == YTest')/numel(YTest)

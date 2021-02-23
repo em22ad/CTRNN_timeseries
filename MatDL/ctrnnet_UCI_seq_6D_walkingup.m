@@ -5,25 +5,43 @@ addpath(genpath('../MatDL'));
 %% Set Params
 USE_QUANT=1; 
 AUG_PER_WINDOW=3;
-%The window size should be less than the mean activiy time
-WINDOW_SZ=round(3.49*50); %# of secs x 50Hz %longer activities generally need longer window sizes
+WINDOW_SZ=round(3.49*50); %# of secs x 50Hz
 AUGMENT_DS=1;
 NCPY_EXT=0.05; % K
 AFT_EVERY=round(WINDOW_SZ/5); % M
 QUANT_LVLS=3;
 DISPLAY_SAMPLES=0;
-DISPLAY_3D_OBS=1;
+
+% B=Y(Y(:,1)>0)
+% size(B)
+% size(Y)
+
+% N=300;
+% Xin = gen_narma_30(N);
+% Xin=Xin(100:end);
+% %X = round(rand(1,1000));
+% T = [(Xin(2:end)-Xin(1:end-1) > 0)];
 
 %ACC=dlmread('HAPT dataset/RawData/acc_exp01_user01.txt');
-%ACC=dlmread('HAPT dataset/RawData/acc_exp04_user02.txt');
-ACC=dlmread('HAPT dataset/RawData/acc_exp05_user03.txt');
+ACC=dlmread('HAPT dataset/RawData/acc_exp04_user02.txt');
+%ACC=dlmread('HAPT dataset/RawData/acc_exp05_user03.txt');
 %ACC=dlmread('HAPT dataset/RawData/acc_exp07_user04.txt');
 %ACC=dlmread('HAPT dataset/RawData/acc_exp09_user05.txt');
 
+% Xact=ACC(300:315,1:3); %2222:2377
+% Xact=Xact';
+% Xact=normalize(Xact);
+
+%X=X(100:end);
+%X = round(rand(1,1000));
+%T = [(Xin(2:end)-Xin(1:end-1) > 0)];
+
+%pattern_act=return_pattern(Xact);
+%pattern=[1 0 1];
 %% Get the full motion sequence
 %Xin=ACC(1:20000,1:3);
-%Xin=ACC(1:16565,1:3); % EXP 4 USR 2
-Xin=ACC(1:20994,1:3); % EXP 5 USR 3
+Xin=ACC(1:16565,1:3); % EXP 4 USR 2
+%Xin=ACC(1:20994,1:3); % EXP 5 USR 3
 %Xin=ACC(1:17668,1:3); % EXP 7 USR 4
 %Xin=ACC(1:16864,1:3);
 
@@ -50,14 +68,14 @@ Tp=zeros(3,size(Xin,2));
 %Tp(1:3,15712:round((15712+16377)/2))=1;
 %Tp(1:3,17298:round((17298+17970)/2))=1;
 % %EXP 4 USR 2 ACT 2
-%Tp(1:3,11294:round((11294+11928)/1.5))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
-%Tp(1:3,12986:round((12986+13602)/1.5))=1;
-%Tp(1:3,14705:round((14705+15274)/1.5))=1;
+Tp(1:3,11294:round((11294+11928)/1.5))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
+Tp(1:3,12986:round((12986+13602)/1.5))=1;
+Tp(1:3,14705:round((14705+15274)/1.5))=1;
 %EXP 5 USR 3 ACT 2
-Tp(1:3,14018:round((14018+14694)/2))=1;
-Tp(1:3,15985:round((15985+16611)/2))=1;
-Tp(1:3,17811:round((17811+18477)/2))=1;
-Tp(1:3,19536:round((19536+20152)/2))=1;
+% Tp(1:3,14018:round((14018+14694)/2))=1;
+% Tp(1:3,15985:round((15985+16611)/2))=1;
+% Tp(1:3,17811:round((17811+18477)/2))=1;
+% Tp(1:3,19536:round((19536+20152)/2))=1;
 %EXP 7 USR 4 ACT 2
 % Tp(1:3,12653:round((12653+13437)/2))=1;
 % Tp(1:3,14548:round((14548+15230)/2))=1;
@@ -67,28 +85,6 @@ Tp(1:3,19536:round((19536+20152)/2))=1;
 % Tp(1:3,13567:round((13567+14201)/2))=1;
 % Tp(1:3,15087:round((15087+15725)/2))=1;
 
-if (DISPLAY_3D_OBS == 1)
-    plot3(Xin(1,1),Xin(2,1),Xin(3,1),'bo')
-    xlim([min(Xin(1,:)) max(Xin(1,:))])
-    ylim([min(Xin(2,:)) max(Xin(2,:))])
-    zlim([min(Xin(3,:)) max(Xin(3,:))])
-    hold on;
-    %for i=2:size(Xin,2)
-        plot3(Xin(1,2:end),Xin(2,2:end),Xin(3,2:end),'bo')
-    %end
-    keep_on=0;
-    for i=2:size(Xin,2)
-        if (Tp(1,i) > 0)
-            keep_on=WINDOW_SZ;
-        end
-
-        if (keep_on > 0) 
-            plot3(Xin(1,i),Xin(2,i),Xin(3,i),'mo')
-            keep_on = keep_on-1;
-        end
-    end
-end
-hold off;
 if (DISPLAY_SAMPLES == 1)
     subplot(3,1,1);
     plot(1:size(Xin,2),Xin(1,1:end))
@@ -243,20 +239,30 @@ for idx=1:size(YVal,1)
 end
 YVal=YVal(1:last_idx,:);
 
+%% Load data
+% load('../Data/mnist_uint8.mat');
+% %X = double(reshape(train_x',28,28,60000))/255;
+% X = double(reshape(train_x',14,56,60000))/255;
+% X = permute(X, [3 2 1]);
+% %XVal = double(reshape(test_x',28,28,10000))/255;
+% XVal = double(reshape(test_x',14,56,10000))/255;
+% XVal = permute(XVal, [3 2 1]);
+% Y = double(train_y);
+% YVal = double(test_y);
 %% Initialize model
 opt = struct;
-%layers_size=[5 5];
-layers_size=[5];
-[model, opt] = init_two_ctrnnm(size(X,1),size(X,2), size(Y,2), layers_size, opt);
+TS=0.01;
+layers_size=[5 5];
+[model, opt] = init_two_ctrnn(size(X,2), size(Y,2), layers_size, opt);
 
 %% Hyper-parameters
-opt.batchSize = 1;%1;
+opt.batchSize = 1;
 
 opt.optim = @rmsprop;
 % opt.beta1 = 0.9; opt.beta2 = 0.999; opt.t = 0; opt.mgrads = opt.vgrads;
-opt.rmspropDecay = 0.90;%0.99;
+opt.rmspropDecay = 0.99;%0.75;
 % opt.initialMomentum = 0.5; opt.switchEpochMomentum = 1; opt.finalMomentum = 0.9;
-opt.learningRate = 0.015;%0.015;
+opt.learningRate = 0.015;
 opt.learningDecaySchedule = 'exp'; %'no_decay';%'t/T';%'step';
 opt.learningDecayRate = 1;
 %opt.learningDecayRateStep = 5;
@@ -269,7 +275,7 @@ opt.maxEpochs = 1000;
 opt.earlyStoppingPatience = 1000;
 opt.valFreq = 100;
 
-opt.plotProgress = true;
+opt.plotProgress = false;
 opt.extractFeature = false;
 opt.computeDX = false;
 opt.t= randn(1, layers_size(1));
@@ -286,12 +292,11 @@ end
 %% Gradient check
 x = X(1:size(X,1)/2, :, :);
 y = Y(1:size(Y,1)/2, :, :);
-maxRelError = gradcheck(@two_ctrnnm, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
+maxRelError = gradcheck(@two_ctrnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
 
 %% Train
-[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnnm, opt );
+[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnn, opt );
 
 %% Predict
-[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnnm, model, opt);
-
+[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnn, model, opt);
 %

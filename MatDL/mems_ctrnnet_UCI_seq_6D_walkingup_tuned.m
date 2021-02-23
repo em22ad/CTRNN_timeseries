@@ -289,9 +289,7 @@ opt = struct;
 %layers_size=[5 5];
 layers_size=[3 3];
 TS=0.01;
-[model, opt] = init_two_ctrnn(3, 2, layers_size, opt);
-%[model, opt] = init_two_ctrnnm(size(X,2), size(Y,2), layers_size, opt);
-
+[model, opt] = init_two_ctrnnm(3, 2, layers_size, opt);
 %% Hyper-parameters
 opt.batchSize = 1;
 
@@ -329,15 +327,16 @@ end
 %% Gradient check
 x = X(1:size(X,1)/2, :, :);
 y = Y(1:size(Y,1)/2, :, :);
-maxRelError = gradcheck(@two_ctrnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
-%maxRelError = gradcheck(@two_ctrnnm, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
+%maxRelError = gradcheck(@two_ctrnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
+maxRelError = gradcheck(@two_ctrnnm, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
 
 %% Train
-[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnn, opt );
-%[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnnm, opt );
+%[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnn, opt );
+[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnnm, opt );
 
 %% Predict
-[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnn, model, opt);
+%[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnn, model, opt);
+[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnnm, model, opt);
 
 ylabel=[];
 for i=1:size(YVal,1)

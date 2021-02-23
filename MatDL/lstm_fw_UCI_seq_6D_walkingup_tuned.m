@@ -1,8 +1,4 @@
-% A complete example of a continuous time recurrent neural network
-%TBD: Try one general model for all users
-%TBD: Move to MEMS-CTRNN
-%TBD: Increase size of network to see its impact
-%TBD: Enhance the performance of Generic CTRNN and MEMS-CTRNN in paralell
+% A complete example of a LSTM neural network
 %% Init
 clear;
 addpath(genpath('../MatDL'));
@@ -101,6 +97,7 @@ Tp(1:3,16964:round((16964+17559)/2))=1;
 % Tp(1:3,11867:round((11867+12553)/2))=1;
 % Tp(1:3,13567:round((13567+14201)/2))=1;
 % Tp(1:3,15087:round((15087+15725)/2))=1;
+
 
 if (DISPLAY_3D_OBS == 1)
     plot3(Xin(1,1),Xin(2,1),Xin(3,1),'bo')
@@ -283,23 +280,25 @@ end
 YVal=YVal(1:last_idx,:);
 XVal=XVal(1:last_idx,:,:);
 %% Initialize model
+%reshape(X,28,,60000);
 X = permute(X, [1 3 2]);
 XVal=permute(XVal, [1 3 2]);
+%X=X(:,:,2);
+%XVal=XVal(:,:,2);
 opt = struct;
 %layers_size=[5 5];
 layers_size=[3 3];
-TS=0.01;
-[model, opt] = init_two_ctrnn(3, 2, layers_size, opt);
-%[model, opt] = init_two_ctrnnm(size(X,2), size(Y,2), layers_size, opt);
+%init_two_rnn(1, 10, [10 10], opt);
+[model, opt] = init_lstm_rnn(3,2, layers_size, opt);
 
 %% Hyper-parameters
-opt.batchSize = 1;
+opt.batchSize = 1;%1;
 
 opt.optim = @rmsprop;
 % opt.beta1 = 0.9; opt.beta2 = 0.999; opt.t = 0; opt.mgrads = opt.vgrads;
-opt.rmspropDecay = 0.99;%0.75;
+opt.rmspropDecay = 0.95;%0.99;
 % opt.initialMomentum = 0.5; opt.switchEpochMomentum = 1; opt.finalMomentum = 0.9;
-opt.learningRate = 0.015;
+opt.learningRate = 0.05;%0.015;
 opt.learningDecaySchedule = 'exp'; %'no_decay';%'t/T';%'step';
 opt.learningDecayRate = 1;
 %opt.learningDecayRateStep = 5;
@@ -329,15 +328,13 @@ end
 %% Gradient check
 x = X(1:size(X,1)/2, :, :);
 y = Y(1:size(Y,1)/2, :, :);
-maxRelError = gradcheck(@two_ctrnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
-%maxRelError = gradcheck(@two_ctrnnm, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
+maxRelError = gradcheck(@lstm_rnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
 
 %% Train
-[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnn, opt );
-%[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @two_ctrnnm, opt );
+[model, trainLoss, trainAccuracy, valLoss, valAccuracy, opt] = train( X, Y, XVal, YVal, model, @lstm_rnn, opt );
 
 %% Predict
-[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @two_ctrnn, model, opt);
+[yplabel, confidence, classes, classConfidences, yp] = predict(XVal, @lstm_rnn, model, opt);
 
 ylabel=[];
 for i=1:size(YVal,1)
