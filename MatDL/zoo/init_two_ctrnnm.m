@@ -1,7 +1,7 @@
-function [model, opt] = init_two_ctrnnm(M, N, K, layers_size, opt)
+function [model, opt] = init_two_ctrnnm(N, K, layers_size, opt)
     
     %M=round(M/2.0);
-    weightScale = 0.01;
+    weightScale = 10000.0;%Framework Default:0.01;
     biasScale = 100;
 
     NL1 = layers_size(1);
