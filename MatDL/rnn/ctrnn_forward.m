@@ -23,6 +23,7 @@ function [out, cache] = ctrnn_forward(x, hprev, wx, wh, b)
     [M, ~, T] = size(x);
     H = size(wh, 2);
     out = zeros(M, H, T);
+    %size(hprev)
     %out(:, :, 1) = tanh( x(:, :, 1) * wx + hprev * wh + repmat(b, M, 1) );
     out(:, :, 1) = (1-ts)*hprev+ts*(tanh( x(:, :, 1) * wx + hprev * wh) + repmat(b, M, 1));
     for t = 2:T

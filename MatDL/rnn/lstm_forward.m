@@ -14,7 +14,10 @@ function [out, cend, houtend, cache] = lstm_forward(x, h0, WLSTM, c0)
 % terms of the MIT license (see the LICENSE file) 
 % from http://github.com/haythamfayek/MatDL
 % Copyright (C) 2016-17 Haytham Fayek.
-
+% 2 3 2 1 2 3 2 1 2 3 4
+% 2 
+%   3
+%     2
     [M, D, T] = size(x); % Batchsize, Input Dimension, Time Steps
     H = size(WLSTM, 2) / 4;
     xphpb = size(WLSTM, 1); % x plus h plus bias

@@ -40,12 +40,9 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
         term1=C.*((tanh(hprev(wi,:)-4.1800e-05)*wh*v(:,wi))+b).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
         term2=(4.1339e-08*(x(wi, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
         out(wi, :, 1) = 0.9395*hprev(wi,:)+term1-term2; %equation 4 implemented
-        out(out > 3.0000e-5)=3.0000e-5;
         v(:,wi)=(tanh(out(wi, :, 1)-4.2000e-05)*wh*v(:,wi))+b; %V update equation on page 2
-        v(v > 140)=140;
-        v(v < 0)=0;
     end
-
+    %out(out > 3.0000e-5)=3.0000e-5;
     %176x49 %176 is the observation per window and 49 is the number of windows 
     %V(5x49)= V(5*49)*tanh(Z(49 x 5)*wh(5x5)+b(5x5)
     %v(5x1)=tanh(out(1x5))*wh(5x5)*v(5x1)'+b(1x5)
@@ -53,21 +50,24 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
     %for wi=1:M
     %    v(:,wi)=(tanh(out(wi, :, 1)-4.2000e-05)*wh*vprev(:,wi))+b; %V update equation on page 2
     %end
+    %v(v > 140)=140;
+    %v(v < 0)=0;
     for wi=1:M
         for t = 2:T
             C=(4.9311e-20./(4.2000e-05-out(wi, :, t - 1)).^2); %a term of Equation (4) where hprev ~ z_i(t) 
             term1=C.*((tanh(out(wi, :, t - 1)-4.1800e-05)*wh*v(:,wi))+b).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
             term2=(4.1339e-08*(x(wi, :, t)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
             out(wi, :, t) = 0.9395*out(wi, :, t - 1)+term1-term2; %equation 4 implemented
-            out(out(wi, :, t) > 3.0000e-5)=3.0000e-5;
             v(:,wi)=(tanh(out(wi, :, t)-4.2000e-05)*wh*v(:,wi))+b; %V update equation on page 2
-            v(v > 140)=140;
-            v(v < 0)=0;
         end
         %for wi=1:M
         %    v(:,wi)=(tanh(out(wi, :, t)-4.2000e-05)*wh*vprev(:,wi))+b; %V update equation on page 2
         %end
+        %v(v > 140)=140;
+        %v(v < 0)=0;
         %vprev=v;
+        %out(out(wi, :, t) > 3.0000e-5)=3.0000e-5;
+        
     end
     cache.x = x; 
     cache.hprev = hprev; 
