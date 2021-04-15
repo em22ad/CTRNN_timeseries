@@ -1,17 +1,47 @@
 % A complete example of a continuous time recurrent neural network
-%TBD: Try one general model for all users
-%TBD: Move to MEMS-CTRNN
-%TBD: Increase size of network to see its impact
-%TBD: Enhance the performance of Generic CTRNN and MEMS-CTRNN in paralell
+%TBD: Try one general model for all users %DONE
+%TBD: Move to MEMS-CTRNN DONE
+%TBD: Increase size of network to see its impact DONE
+%TBD: Enhance the performance of Generic CTRNN and MEMS-CTRNN in parallel
+%(with changing values of /tau)
+%TBD -1: Increase the subject size and see if we can remove synthetic
+%datatset (DECREASES PERFORMANCE) Outcome: Removing synthetic dataset gives us a maximum of 53.7% accuracy
+%for 5 subjects. Class imbalance goes up to 22.41% vs 77.59%. With Syhthetic 
+%class, imbalance drops to 47.27% vs 53.73%   
+%TBD 0: Tune the limits on the output of MEMS-CTRNN node. (create chart if
+%variation in output is high). Outcome: 4.0e-5 gives the optimal
+%performance. Lower values than 3.0e-5 produce NaNs and unoptimal
+%performance. Plot a comparison between two values e.g (3.0 and 4.0e-5)
+%TBD 1: Compare Typical CTRNN & MEMS-CTRNN with Quantization (3,6,9,16
+%neurons) DONE
+%TBD 2: Remove Quantization for both CTRNN & MEMS-CTRNN & LSTM and compare (6
+%neurons) DONE
+%TBD 3: Extract the value of weights after training. (Just for one case)
+%DONE
+%TBD 4a: Train the Natural Frequency(tau) of the MEMS-CTRNN without
+%Quantization
+%TBD 4b: Use tau to reduce the noise and see if quantization can be removed 
+%TBD 5: Select the best acceleration(X,Y or Z) and see how much accuracy is reduced.
+%backpropagation function for any potential problems)
+%TBD 6: Compare LSTM, CTRNN and MEMS-CTRNN for non-qunatization scenario
+%DONE
+%TBD 7: Report in terms of both Accuracy and F1 score
+%Tasks remaining:
+%TBD 3
+%TBD 4
+%TBD 0
+%TBD 5
 %% Init
 clear;
 addpath(genpath('../MatDL'));
 %% Set Params
-USE_QUANT=1; 
-AUG_PER_WINDOW=3;
+USE_QUANT=0; 
+%AUG_PER_WINDOW=10; %LARGE VALUE WILL INCREASE MEMBERSHIP OF CLASS 1
 %The window size should be less than the mean activiy time
 PHY_WINDOW_SZ=1;
-WINDOW_SZ=round(3.49*50); %# of secs x 50Hz %longer activities generally need longer window sizes
+%WINDOW_SZ=round(6.0*50);AUG_PER_WINDOW=3; %# of secs x 50Hz %longer activities generally need longer window sizes
+WINDOW_SZ=round(3.7*50);AUG_PER_WINDOW=10; %# of secs x 50Hz %longer activities generally need longer window sizes ACT 7 STAND_TO_SIT
+%WINDOW_SZ=round(1.7*50);AUG_PER_WINDOW=5; %# of secs x 50Hz %longer activities generally need longer window sizes ACT 8 SIT_TO_STAND
 AUGMENT_DS=1;
 NCPY_EXT=0.05; % K
 AFT_EVERY=round(WINDOW_SZ/5); % M
@@ -19,18 +49,22 @@ QUANT_LVLS=3;
 DISPLAY_SAMPLES=0;
 DISPLAY_3D_OBS=0;
 
-%ACC=dlmread('HAPT dataset/RawData/acc_exp01_user01.txt');
-%ACC=dlmread('HAPT dataset/RawData/acc_exp04_user02.txt');
-ACC=dlmread('HAPT dataset/RawData/acc_exp05_user03.txt');
-%ACC=dlmread('HAPT dataset/RawData/acc_exp07_user04.txt');
-%ACC=dlmread('HAPT dataset/RawData/acc_exp09_user05.txt');
+ACC1=dlmread('HAPT dataset/RawData/acc_exp01_user01.txt');
+ACC2=dlmread('HAPT dataset/RawData/acc_exp02_user01.txt');
+ACC4=dlmread('HAPT dataset/RawData/acc_exp04_user02.txt');
+ACC5=dlmread('HAPT dataset/RawData/acc_exp05_user03.txt');
+ACC7=dlmread('HAPT dataset/RawData/acc_exp07_user04.txt');
+ACC9=dlmread('HAPT dataset/RawData/acc_exp09_user05.txt');
 
 %% Get the full motion sequence
-%Xin=ACC(1:20000,1:3);
-%Xin=ACC(1:16565,1:3); % EXP 4 USR 2
-Xin=ACC(1:20994,1:3); % EXP 5 USR 3
-%Xin=ACC(1:17668,1:3); % EXP 7 USR 4
-%Xin=ACC(1:16864,1:3);
+Xin1=ACC1(1:20598,1:3); % EXP 1 USR 1
+Xin2=ACC2(1:19286,1:3); % EXP 2 USR 1
+Xin4=ACC4(1:16565,1:3); % EXP 4 USR 2
+Xin5=ACC5(1:20994,1:3); % EXP 5 USR 3
+Xin7=ACC7(1:17668,1:3); % EXP 7 USR 4
+Xin9=ACC9(1:16864,1:3); % EXP 9 USR 5
+
+Xin=[Xin1;Xin2;Xin4;Xin5;Xin7;Xin9];
 
 %X=ACC(:,1);
 Xin=Xin';
@@ -49,59 +83,114 @@ elseif (QUANT_LVLS==3)
 end
 %%
 %[idxs,pattern]=find_mod_pattern_6D(Xact,T,4,size(Xact,2)*2,10000);
-Tp=zeros(3,size(Xin,2));
-%EXP 1 USR 1 ACT 1
-%Tp(1:3,7496:round((7496+8078)/2))=1;
-%Tp(1:3,8356:round((8356+9250)/2))=1;
-%Tp(1:3,9657:round((9657+10567)/2))=1;
-%Tp(1:3,10750:round((10750+11714)/2))=1;
-%EXP 1 USR 1 ACT 2
-%Tp(1:3,14069:round((14069+14699)/2))=1;
-%Tp(1:3,15712:round((15712+16377)/2))=1;
-%Tp(1:3,17298:round((17298+17970)/2))=1;
-%EXP 1 USR 1 ACT 3
-%Tp(1:3,14069:round((14069+14699)/2))=1;
-%Tp(1:3,15712:round((15712+16377)/2))=1;
-%Tp(1:3,17298:round((17298+17970)/2))=1;
-%EXP 4 USR 2 ACT 1
-%Tp(1:3,7306:round((7306+8343)/2))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
-%Tp(1:3,8720:round((8720+9686)/2))=1;
-%EXP 4 USR 2 ACT 2
-%Tp(1:3,11294:round((11294+11928)/2))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
-%Tp(1:3,12986:round((12986+13602)/2))=1;
-%Tp(1:3,14705:round((14705+15274)/2))=1;
-%EXP 4 USR 2 ACT 3
-%Tp(1:3,10438:round((10438+11056)/2))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
-%Tp(1:3,12171:round((12171+12732)/2))=1;
-%Tp(1:3,13862:round((13862+14444)/2))=1;
-%EXP 5 USR 3 ACT 1
-Tp(1:3,8687:round((8687+9837)/2))=1;
-Tp(1:3,10240:round((10240+11305)/2))=1;
-%EXP 5 USR 3 ACT 2
-Tp(1:3,14018:round((14018+14694)/2))=1;
-Tp(1:3,15985:round((15985+16611)/2))=1;
-Tp(1:3,17811:round((17811+18477)/2))=1;
-Tp(1:3,19536:round((19536+20152)/2))=1;
-%EXP 5 USR 3 ACT 3
-Tp(1:3,15098:round((15098+15693)/2))=1;
-Tp(1:3,16964:round((16964+17559)/2))=1;
-%EXP 7 USR 4 ACT 1
-% Tp(1:3,8125:round((8125+9269)/2))=1;
-% Tp(1:3,9443:round((9443+10483)/2))=1;
-%EXP 7 USR 4 ACT 2
-% Tp(1:3,12653:round((12653+13437)/2))=1;
-% Tp(1:3,14548:round((14548+15230)/2))=1;
-% Tp(1:3,16178:round((16178+16814)/2))=1;
-%EXP 7 USR 4 ACT 3
-% Tp(1:3,11340:round((11340+11596)/2))=1;
-% Tp(1:3,11824:round((11824+12047)/2))=1;
-% Tp(1:3,13625:round((13625+14341)/2))=1;
-% Tp(1:3,15391:round((15391+16025)/2))=1;
-%EXP 9 USR 5 ACT 2
-% Tp(1:3,11867:round((11867+12553)/2))=1;
-% Tp(1:3,13567:round((13567+14201)/2))=1;
-% Tp(1:3,15087:round((15087+15725)/2))=1;
+Tp1=zeros(3,size(Xin1,1));
+Tp2=zeros(3,size(Xin2,1));
+Tp4=zeros(3,size(Xin4,1));
+Tp5=zeros(3,size(Xin5,1));
+Tp7=zeros(3,size(Xin7,1));
+Tp9=zeros(3,size(Xin9,1));
 
+% %%1,2,3 WALKING, WALKING UP, WALKING DOWN
+% %EXP 1 USR 1 ACT 1
+% Tp1(1:3,7496:round((7496+8078)/1))=1;
+% Tp1(1:3,8356:round((8356+9250)/1))=1;
+% Tp1(1:3,9657:round((9657+10567)/1))=1;
+% Tp1(1:3,10750:round((10750+11714)/1))=1;
+% % %EXP 1 USR 1 ACT 2
+% Tp1(1:3,14069:round((14069+14699)/1))=1;
+% Tp1(1:3,15712:round((15712+16377)/1))=1;
+% Tp1(1:3,17298:round((17298+17970)/1))=1;
+% %%EXP 1 USR 1 ACT 3
+% Tp1(1:3,14069:round((14069+14699)/1))=1;
+% Tp1(1:3,15712:round((15712+16377)/1))=1;
+% Tp1(1:3,17298:round((17298+17970)/1))=1;
+% %%EXP 2 USR 1 ACT 1
+% Tp2(1:3,7624:round((7624+8252)/1))=1;
+% Tp2(1:3,8618:round((8618+9576)/1))=1;
+% Tp2(1:3,9991:round((9991+10927)/1))=1;
+% Tp2(1:3,11311:round((11311+12282)/2))=1;
+% %%EXP 2 USR 1 ACT 2
+% Tp2(1:3,14128:round((14128+14783)/1))=1;
+% Tp2(1:3,15920:round((15920+16598)/1))=1;
+% Tp2(1:3,17725:round((17725+18425)/1))=1;
+% %%EXP 2 USR 1 ACT 3
+% Tp2(1:3,13129:round((13129+13379)/1))=1;
+% Tp2(1:3,13495:round((13495+13927)/1))=1;
+% Tp2(1:3,15037:round((15037+15684)/1))=1;
+% Tp2(1:3,16847:round((16847+17471)/1))=1;
+% %EXP 4 USR 2 ACT 1
+% Tp4(1:3,7306:round((7306+8343)/1))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
+% Tp4(1:3,8720:round((8720+9686)/1))=1;
+% %%EXP 4 USR 2 ACT 2
+% Tp4(1:3,11294:round((11294+11928)/1))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
+% Tp4(1:3,12986:round((12986+13602)/1))=1;
+% Tp4(1:3,14705:round((14705+15274)/1))=1;
+% %%EXP 4 USR 2 ACT 3
+% Tp4(1:3,10438:round((10438+11056)/1))=1; %Mark the beginning 50% of the samples for an activity as 1 and the rest zero
+% Tp4(1:3,12171:round((12171+12732)/1))=1;
+% Tp4(1:3,13862:round((13862+14444)/1))=1;
+% %%EXP 5 USR 3 ACT 1
+% Tp5(1:3,8687:round((8687+9837)/1))=1;
+% Tp5(1:3,10240:round((10240+11305)/1))=1;
+% %%EXP 5 USR 3 ACT 2
+% Tp5(1:3,14018:round((14018+14694)/1))=1;
+% Tp5(1:3,15985:round((15985+16611)/1))=1;
+% Tp5(1:3,17811:round((17811+18477)/1))=1;
+% Tp5(1:3,19536:round((19536+20152)/1))=1;
+% %%EXP 5 USR 3 ACT 3
+% Tp5(1:3,15098:round((15098+15693)/1))=1;
+% Tp5(1:3,16964:round((16964+17559)/1))=1;
+% %%EXP 7 USR 4 ACT 1
+% Tp7(1:3,8125:round((8125+9269)/1))=1;
+% Tp7(1:3,9443:round((9443+10483)/1))=1;
+% %%EXP 7 USR 4 ACT 2
+% Tp7(1:3,12653:round((12653+13437)/1))=1;
+% Tp7(1:3,14548:round((14548+15230)/1))=1;
+% Tp7(1:3,16178:round((16178+16814)/1))=1;
+% %%EXP 7 USR 4 ACT 3
+% Tp7(1:3,11340:round((11340+11596)/1))=1;
+% Tp7(1:3,11824:round((11824+12047)/1))=1;
+% Tp7(1:3,13625:round((13625+14341)/1))=1;
+% Tp7(1:3,15391:round((15391+16025)/1))=1;
+% %%EXP 9 USR 5 ACT 1
+% Tp9(1:3,7891:round((7891+9023)/1))=1;
+% Tp9(1:3,9216:round((9216+10237)/1))=1;
+% %%EXP 9 USR 5 ACT 2
+% Tp9(1:3,11867:round((11867+12553)/1))=1;
+% Tp9(1:3,13567:round((13567+14201)/1))=1;
+% Tp9(1:3,15087:round((15087+15725)/1))=1;
+% %%EXP 9 USR 5 ACT 3
+% Tp9(1:3,11051:round((11051+11704)/1))=1;
+% Tp9(1:3,12795:round((12795+13414)/1))=1;
+% Tp9(1:3,14384:round((14384+14963)/1))=1;
+%%7 STAND_TO_SIT 
+%EXP 1 USR 1 ACT 7
+Tp1(1:3,1233:round((1233+1392)/1))=1;
+%%EXP 2 USR 1 ACT 7
+Tp2(1:3,1227:round((1227+1432)/1))=1;
+%%EXP 4 USR 2 ACT 7
+Tp4(1:3,1352:round((1352+1511)/1))=1;
+%%EXP 5 USR 3 ACT 7
+Tp5(1:3,1365:round((1365+1506)/1))=1;
+%%EXP 7 USR 4 ACT 7
+Tp7(1:3,1292:round((1292+1527)/1))=1;
+%%EXP 9 USR 5 ACT 7
+Tp9(1:3,1222:round((1222+1386)/1))=1;
+%%8 SIT_TO_STAND  
+%%EXP 1 USR 1 ACT 8
+% Tp1(1:3,2195:round((2195+2359)/1))=1;
+% %%EXP 2 USR 1 ACT 8
+% Tp2(1:3,2222:round((2222+2377)/1))=1;
+% %%EXP 4 USR 2 ACT 8
+% Tp4(1:3,2310:round((2310+2448)/1))=1;
+% %%EXP 5 USR 3 ACT 8
+% Tp5(1:3,2361:round((2361+2470)/1))=1;
+% %%EXP 7 USR 4 ACT 8
+% Tp7(1:3,2382:round((2382+2511)/1))=1;
+% %%EXP 9 USR 5 ACT 8
+% Tp9(1:3,2200:round((2200+2325)/1))=1;
+
+Tp=[Tp1 Tp2 Tp4 Tp5 Tp7 Tp9];
 if (DISPLAY_3D_OBS == 1)
     plot3(Xin(1,1),Xin(2,1),Xin(3,1),'bo')
     xlim([min(Xin(1,:)) max(Xin(1,:))])
@@ -126,15 +215,17 @@ if (DISPLAY_3D_OBS == 1)
 end
 
 
-X_f=zeros(ceil((size(Xin,2)-WINDOW_SZ)/WINDOW_SZ),WINDOW_SZ,3);
+X_f=zeros(ceil((size(Xin,2)-WINDOW_SZ)/WINDOW_SZ),WINDOW_SZ,2);
 Y_f=[];
-XVal_f=zeros(size(Xin,2)-WINDOW_SZ,WINDOW_SZ,3);
+XVal_f=zeros(ceil((size(Xin,2)-WINDOW_SZ)/WINDOW_SZ),WINDOW_SZ,2);
 YVal_f=[];
 ctr_a=1;
 ctr_b=1;
+counter=1;
 for i=1:WINDOW_SZ:size(Xin,2)-WINDOW_SZ
-    if mod(i,3) ~= 0
-        if (Tp(1,i) == 1)
+    if mod(counter,3) ~= 0
+        %if (sum(Tp(1,i:i+WINDOW_SZ)) >= WINDOW_SZ/2.0)
+        if (sum(Tp(1,i:i+WINDOW_SZ)) >= WINDOW_SZ/3.0)
             if (USE_QUANT == 0)
                 X_f(ctr_a,:,1:3)=Xin(1:3,i:i+WINDOW_SZ-1)';
             else
@@ -170,9 +261,30 @@ for i=1:WINDOW_SZ:size(Xin,2)-WINDOW_SZ
             end
             Y_f=[Y_f;[0 1]];
             ctr_a=ctr_a+1;
+            if (0)%(AUGMENT_DS == 1)
+                ii=1;
+                while (ii <= AUG_PER_WINDOW)
+                    if (USE_QUANT == 0)
+                        Mut_X1=gen_variations(Xin(1,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X2=gen_variations(Xin(2,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X3=gen_variations(Xin(3,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                    else
+                        Mut_X1=gen_variations(T(1,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X2=gen_variations(T(2,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X3=gen_variations(T(3,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                    end
+                    Mut_X=[Mut_X1' Mut_X2' Mut_X3'];
+                    X_f(ctr_a,:,1:3)=Mut_X;
+                    Y_f=[Y_f;[0 1]];
+                    ii=ii+1;
+                    ctr_a=ctr_a+1;
+                end
+            end
+
         end
     else
-        if (Tp(1,i) == 1)
+        if (sum(Tp(1,i:i+WINDOW_SZ)) >= WINDOW_SZ/2.0)
+        %if (sum(Tp(1,i:i+WINDOW_SZ)) >= WINDOW_SZ/3.0)
             if (USE_QUANT == 0)
                 XVal_f(ctr_b,:,1:3)=Xin(1:3,i:i+WINDOW_SZ-1)';
             else
@@ -208,9 +320,28 @@ for i=1:WINDOW_SZ:size(Xin,2)-WINDOW_SZ
             end
             YVal_f=[YVal_f;[0 1]];
             ctr_b=ctr_b+1;
+            if (0)%(AUGMENT_DS == 1)
+                ii=1;
+                while (ii <= AUG_PER_WINDOW)
+                    if (USE_QUANT == 0)
+                        Mut_X1=gen_variations(Xin(1,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X2=gen_variations(Xin(2,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X3=gen_variations(Xin(3,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                    else
+                        Mut_X1=gen_variations(T(1,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X2=gen_variations(T(2,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                        Mut_X3=gen_variations(T(3,i:i+WINDOW_SZ-1),AFT_EVERY,NCPY_EXT);
+                    end
+                    Mut_X=[Mut_X1' Mut_X2' Mut_X3'];
+                    X_f(ctr_b,:,1:3)=Mut_X;
+                    Y_f=[Y_f;[0 1]];
+                    ii=ii+1;
+                    ctr_b=ctr_b+1;
+                end
+            end
         end
-
     end  
+    counter=counter+1;
 end
 
 %X=zeros(size(Y_f,1),size(X_f,2),size(X_f,3));
@@ -287,17 +418,17 @@ X = permute(X, [1 3 2]);
 XVal=permute(XVal, [1 3 2]);
 opt = struct;
 %layers_size=[5 5];
-layers_size=[3 3];
+layers_size=[3];
 TS=0.01;
 [model, opt] = init_two_ctrnnm(3, 2, layers_size, opt);
 %% Hyper-parameters
-opt.batchSize = 1;
+opt.batchSize = 30;
 
 opt.optim = @rmsprop;
 % opt.beta1 = 0.9; opt.beta2 = 0.999; opt.t = 0; opt.mgrads = opt.vgrads;
-opt.rmspropDecay = 0.99;%0.75;
+opt.rmspropDecay = 0.9667;%0.75;
 % opt.initialMomentum = 0.5; opt.switchEpochMomentum = 1; opt.finalMomentum = 0.9;
-opt.learningRate = 0.015;
+opt.learningRate = 0.015;%0.015;
 opt.learningDecaySchedule = 'exp'; %'no_decay';%'t/T';%'step';
 opt.learningDecayRate = 1;
 %opt.learningDecayRateStep = 5;
@@ -306,8 +437,8 @@ opt.dropout = 1;
 opt.weightDecay = false;
 opt.maxNorm = false;
 
-opt.maxEpochs = 100;
-opt.earlyStoppingPatience = 100;
+opt.maxEpochs = 1000;
+opt.earlyStoppingPatience = 1000;
 opt.valFreq = 25;
 
 opt.plotProgress = true;
@@ -325,8 +456,8 @@ if (opt.useGPU) % Copy data, dropout, model, vgrads, BNParams
 end
 
 %% Gradient check
-x = X(1:size(X,1)/2, :, :);
-y = Y(1:size(Y,1)/2, :, :);
+x = X(1:floor(size(X,1)/2), :, :);
+y = Y(1:floor(size(Y,1)/2), :, :);
 %maxRelError = gradcheck(@two_ctrnn, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
 maxRelError = gradcheck(@two_ctrnnm, x, model, y, opt, 2); %last argument should be less or equal to the number of classes
 
