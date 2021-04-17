@@ -29,7 +29,7 @@ function [ maxRelError ] = gradcheck( lossfun, x, model, y, opt, numChecks  )
         end
         mn = numel(model.(p{i}));
         %mn
-        numChecks
+        %numChecks
         imn = (randperm(mn, numChecks));
         for j = 1:numChecks
             oldVal = model.(p{i})(imn(j));
