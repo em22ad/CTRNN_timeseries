@@ -7,7 +7,7 @@ USE_QUANT=0;
 %AUG_PER_WINDOW=10; %LARGE VALUE WILL INCREASE MEMBERSHIP OF CLASS 1
 %The window size should be less than the mean activiy time
 PHY_WINDOW_SZ=1;
-WINDOW_SZ=round(3.7*50);AUG_PER_WINDOW=10; %# of secs x 50Hz %longer activities generally need longer window sizes ACT 7 STAND_TO_SIT
+WINDOW_SZ=round(1.7*50);AUG_PER_WINDOW=5; %# of secs x 50Hz %longer activities generally need longer window sizes ACT 8 SIT_TO_STAND
 
 %Genetic algorithm mutated synthetic observations flag
 AUGMENT_DS=1;
@@ -62,19 +62,19 @@ Tp5=zeros(3,size(Xin5,1));
 Tp7=zeros(3,size(Xin7,1));
 Tp9=zeros(3,size(Xin9,1));
 
-%%7 STAND_TO_SIT 
-%EXP 1 USR 1 ACT 7
-Tp1(1:3,1233:round((1233+1392)/1))=1;
-%%EXP 2 USR 1 ACT 7
-Tp2(1:3,1227:round((1227+1432)/1))=1;
-%%EXP 4 USR 2 ACT 7
-Tp4(1:3,1352:round((1352+1511)/1))=1;
-%%EXP 5 USR 3 ACT 7
-Tp5(1:3,1365:round((1365+1506)/1))=1;
-%%EXP 7 USR 4 ACT 7
-Tp7(1:3,1292:round((1292+1527)/1))=1;
-%%EXP 9 USR 5 ACT 7
-Tp9(1:3,1222:round((1222+1386)/1))=1;
+%%8 SIT_TO_STAND  
+%%EXP 1 USR 1 ACT 8
+Tp1(1:3,2195:round((2195+2359)/1))=1;
+%%EXP 2 USR 1 ACT 8
+Tp2(1:3,2222:round((2222+2377)/1))=1;
+%%EXP 4 USR 2 ACT 8
+Tp4(1:3,2310:round((2310+2448)/1))=1;
+%%EXP 5 USR 3 ACT 8
+Tp5(1:3,2361:round((2361+2470)/1))=1;
+%%EXP 7 USR 4 ACT 8
+Tp7(1:3,2382:round((2382+2511)/1))=1;
+%%EXP 9 USR 5 ACT 8
+Tp9(1:3,2200:round((2200+2325)/1))=1;
 
 %The ground truth label  vector
 Tp=[Tp1 Tp2 Tp4 Tp5 Tp7 Tp9];
