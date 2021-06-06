@@ -25,7 +25,7 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
             %<------>
             %  <------>
             %     <------>
-    omg=1209.5*2.0;
+    omg=1209.5*20;
     zeta=1.028075;
     tau=(2*zeta)/omg;%0.0017;
     dt=0.0001;
@@ -44,7 +44,7 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
         %(C(1x5).x tanh(z(1x5))w(5x1)*V(1*5))+ b(1x5)
         term1=C.*((tanh(hprev(wi,:)-4.1800e-05)*wh*v(:,wi))+b).^2; %a term of Equation (4) where vprev ~ V_j, wh ~ w_ij, b ~ theta_i
         %term2=(4.1339e-08*(x(wi, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
-        term2=(((dt/tau)*(1/omg^2))*(x(wi, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
+        term2=((((dt/tau)*(1/omg^2))).*(x(wi, :, 1)*wx)); %a term of Equation (4) where x ~ accelerometer input, wx ~ w_in,k
         %out(wi, :, 1) = 0.9395*hprev(wi,:)+term1-term2; %equation 4 implemented
         out(wi, :, 1) = (1-(dt/tau))*hprev(wi,:)+term1-term2; %equation 4 implemented
         out(out > 3.8000e-5)=3.8000e-5;%default=3.0000e-5
@@ -84,7 +84,8 @@ function [out, cache] = ctrnnm_forward(x, hprev, wx, wh, b)
 %                     %v(v < 0)=abs(v);%0;
 %                 end
 %             end
-            v(v < -140)=-140;
+            
+v(v < -140)=-140;
             v(v > 140)=140;
         end
         %for wi=1:M
