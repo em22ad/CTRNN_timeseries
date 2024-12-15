@@ -3,8 +3,8 @@
 [![status](https://cdn.ncbi.nlm.nih.gov/corehtml/query/egifs/https:--res.mdpi.com-data-pubmed-linkout.png)](https://www.mdpi.com/2072-666X/12/3/268)
 [![DOI](https://zenodo.org/badge/103798084.svg)](https://www.frontiersin.org/journals/digital-health/articles/10.3389/fdgth.2021.731076/full)
 
-*MatDL* is an open-source lightweight deep learning library native in MATLAB that implements some most commonly used deep learning algorithms. 
-The library comprises functions that implement the following: (1) basic building blocks of modern neural networks such as affine transformations, convolutions, nonlinear operations, dropout, batch normalization, etc.; (2) popular architectures such as deep neural networks (DNNs), convolutional neural networks (ConvNets), and recurrent neural networks (RNNs) and their variant, the long short-term memory (LSTM) RNNs; (3) optimizers such stochastic gradient descent (SGD), RMSProp and ADAM; as well as (4) boilerplate functions for training, gradients checking, etc.
+This simulation based on *MatDL*, an open-source lightweight deep learning library native in MATLAB that implements some most commonly used deep learning algorithms. 
+CTRNN simulation for MEMS based Neural Networks offer a deiciated backpropagation through time algorithm for recurrent neural networks (RNNs). Several boilerplate functions for training, gradients checking, etc. are also implemented for this simulation.
 
 ## Installation
 
@@ -116,32 +116,6 @@ Important files that are relevant to MEMS CTRNN implementation
 - 'CTRNN_timeseries/MatDL/zoo/init_two_ctrnnm.m': We initialize all the parameters required for training for MEMS-CTRNN here
 - 'CTRNN_timeseries/MatDL/zoo/two_ctrnnm.m': Training functions are called in this module 
 - 'CTRNN_timeseries/MatDL/optim': You can change the training optimizer files here. Make sure to exclude a parameter in these files, if you do not want to use it in the training process.
-
-## Citation
-
-If you use this library in your research, please cite:
-
-`Fayek, (2017). MatDL: A Lightweight Deep Learning Library in MATLAB. Journal of Open Source Software, 2(19), 413, doi:10.21105/joss.00413`
-
-```
-@article{Fayek2017,
-    author       = {Haytham M. Fayek},
-    title        = {{MatDL}: A Lightweight Deep Learning Library in {MATLAB}},
-    journal      = {Journal of Open Source Software},
-    year         = {2017},
-    month        = {nov},
-    volume       = {2},
-    number       = {19},
-    doi          = {10.21105/joss.00413},
-    url          = {https://doi.org/10.21105/joss.00413},
-    publisher    = {The Open Journal},
-}
-```
-
-## References
-
-*MatDL* was inspired by Stanford's CS231n and Torch, and is conceptually similar to Keras and Lasagne.
-Torch, keras and Lasagne are more suited for large-scale experiments.
 
 ## License
 
