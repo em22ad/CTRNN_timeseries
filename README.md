@@ -1,7 +1,7 @@
-# MatDL
+# CTRNN based Simulation for MEMS based Neural Networks
 
-[![status](http://joss.theoj.org/papers/fa33e01459843ac8a5b781b1bd0c3250/status.svg)](http://joss.theoj.org/papers/fa33e01459843ac8a5b781b1bd0c3250)
-[![DOI](https://zenodo.org/badge/103798084.svg)](https://zenodo.org/badge/latestdoi/103798084)
+[![status](http://joss.theoj.org/papers/fa33e01459843ac8a5b781b1bd0c3250/status.svg)](https://www.mdpi.com/2072-666X/12/3/268)
+[![DOI](https://zenodo.org/badge/103798084.svg)](https://www.frontiersin.org/journals/digital-health/articles/10.3389/fdgth.2021.731076/full)
 
 *MatDL* is an open-source lightweight deep learning library native in MATLAB that implements some most commonly used deep learning algorithms. 
 The library comprises functions that implement the following: (1) basic building blocks of modern neural networks such as affine transformations, convolutions, nonlinear operations, dropout, batch normalization, etc.; (2) popular architectures such as deep neural networks (DNNs), convolutional neural networks (ConvNets), and recurrent neural networks (RNNs) and their variant, the long short-term memory (LSTM) RNNs; (3) optimizers such stochastic gradient descent (SGD), RMSProp and ADAM; as well as (4) boilerplate functions for training, gradients checking, etc.
